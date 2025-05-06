@@ -1,7 +1,10 @@
 import os
 from decouple import config
+from langchain import hub
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -34,7 +37,26 @@ vector_store = Chroma.from_documents(
 
 retriever = vector_store.as_retriever()
 
-result = retriever.invoke(
-    'Qual é a bateria do notebook?'
+prompt = hub.pyull('rlm/rag-prompt')
+
+rag_chain = (
+    {
+        'context': retriever,
+        'question': RunnablePassthrough(),
+    }
+    | prompt
+    | model
+    | StrOutputParser()
 )
-print(result)
+
+# question = 'Como funciona o cancelamento de ruído inteligente?'
+# response = rag_chain.invoke(question)
+# print(response)
+
+try:
+    while True:
+        question = input('Qual a sua dúvida? ')
+        response = rag_chain.invoke(question)
+        print(response)
+except KeyboardInterrupt:
+    exit()
